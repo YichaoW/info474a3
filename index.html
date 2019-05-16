@@ -1,19 +1,12 @@
 <html>
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
 
-.states {
-  fill: #ccc;
-  stroke: #fff;
-}
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
 
-.symbol {
-  fill-opacity: .8;
-  stroke: #fff;
-}
 
-</style>
 <body>
 
 <!--Rather than loading v3 or v4, loading individual modules to ensure compatibility with v4 functions (loads newest version of each)-->
@@ -26,9 +19,10 @@
 <script src="https://d3js.org/d3-dsv.v0.3.min.js"></script>
 <script src="https://d3js.org/d3-request.v0.4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-
-<script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+<!--<script>
 
 
 
@@ -104,8 +98,23 @@ function buildMap(error, topology) {
 
    
 
-</script>
-  
+</script>-->
+<div>
+    <label for="locationFilter">Location Filter:</label>
+    <input type="text" id="locationFilterText" size="1000" readonly style="border:0; color:#4286f4; font-weight:bold;">
+  <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+  <div id="map"></div>
+</div>
+<!--<form> 
+  <span class="style51"><span class="style49">Show</span>:</span> 
+<input id="address" type="text" value="11501" ></input>
+<input id="geocode" type="button" onclick="codeAddress(document.getElementById('address').value);" value="Geocode"></input>	  
+<div id="map_canvas"></div>-->
+
+
+<script src="interactiveMap.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZqVD-AlL3_swjgXmFXr-X_-q7_2B3xsg&libraries=places&callback=initMap"
+async defer></script>
 </body>
 </html>
 
