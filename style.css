@@ -91,3 +91,22 @@ html, body {
 #target {
   width: 345px;
 }
+
+.states {
+  fill: #ccc;
+  stroke: #fff;
+}
+
+.symbol {
+  fill-opacity: .8;
+  stroke: #fff;
+}
+
+.tooltip {
+  position: absolute;
+
+  pointer-events: none;
+  background-color: whitesmoke;
+  border-radius: 3px;
+  padding: 0.2rem;
+}

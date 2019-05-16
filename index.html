@@ -19,86 +19,15 @@
 <script src="https://d3js.org/d3-dsv.v0.3.min.js"></script>
 <script src="https://d3js.org/d3-request.v0.4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
-<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
   <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
-<!--<script>
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+  <link data-require="bootstrap-css@*" data-semver="3.2.0" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
 
-
-
-var width = 960,
-    height = 500;
-
-var projection = d3.geoAlbers();
-var path = d3.geoPath()
-	.projection(projection);
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height);
-  
-d3.queue()
-    .defer(d3_request.json, "king_county.json")
-    .await(buildMap);
-
-function buildMap(error, topology) {
-    const censusTractsGeoJSON = topojson.feature(topology, topology.objects.census_tracts);
-
-    /** Get size of the window, and compute some sizing parameters relative to the window
-     * ...these will be used by projection.fitExtent() below to size and scale the map */
-    const mapWidth = window.innerWidth * 0.8;  // map width will be 80% of the view height (pixels)
-    const mapHeight = window.innerHeight * 0.8; // map height will be 80% of the view height (pixels)
-    const minOfWidthHeight = d3.min([mapWidth, mapHeight]); // take the minimum, and make it square (pixels)
-    const mapPadddingTop = 0; // padding around map geometry (pixels)
-    const mapPadddingLeft = 100; // padding around map geometry (pixels)
-
-    /** find the centroid of the topology in long, lat */
-    const mapCentroid = d3.geoCentroid(censusTractsGeoJSON); // [longitude, latitude]
-    const longitudinalRotation = -mapCentroid[0];
-
-    const projection = d3.geoAlbers()
-      .rotate([longitudinalRotation, 0])
-      .fitExtent([[mapPadddingLeft, mapPadddingTop], [minOfWidthHeight, minOfWidthHeight]], censusTractsGeoJSON);
-
-    /** The geoPath takes in arrays of [long, lat] values and converts them to svg <path> objects */
-    const geoPath = d3.geoPath()
-      .projection(projection);
   
 
-    /** append a group (g) to the svg */
-    svg.append('g')
-    /** add the class name 'census_tracts' to the group */
-      .classed('census_tracts', true)
-      /** select any existing path nodes (there aren't any, but this also tells d3 that we're about to join some data to paths) */
-      .selectAll('path')
-      /** create a data join with the array of census tract boundaries (enter, update, exit are the 'selections') */
-      .data(censusTractsGeoJSON.features, function(datum) { return datum.properties.location_id; })
-      /** get the objects representing new data coming into the view 'enter selection' */
-      .enter()
-      /** append an svg <path> node to each of the newly entering objects */
-      .append('path')
-      /** add the class name 'census_tract_boundary' to each path */
-      .classed('census_tract_boundary', true)
-      .attr('d', geoPath)
-      .attr('fill', function (geoDatum) {
-        /** find the mortality datum that has the same location_id as this geo path */
-        const mortalityDatumObject = mortalityByLocationYear[geoDatum.properties.location_id]
-          ? mortalityByLocationYear[geoDatum.properties.location_id][restrictByYear]
-          : undefined;
-        /** check for missing object, return black if we didn't find the right mortality datum */
-        if (mortalityDatumObject === undefined) {
-          return 'black';
-        }
-        /** get the mortality value and convert it from a string to a number */
-        const mortalityValue = +mortalityDatumObject.val;
-        /** return the color scale that corresponds */
-        return colorScale(mortalityValue);
-      });
-}
 
-   
-
-</script>-->
 <div>
     <label for="locationFilter">Location Filter:</label>
     <input type="text" id="locationFilterText" size="1000" readonly style="border:0; color:#4286f4; font-weight:bold;">
@@ -111,7 +40,42 @@ function buildMap(error, topology) {
 <input id="geocode" type="button" onclick="codeAddress(document.getElementById('address').value);" value="Geocode"></input>	  
 <div id="map_canvas"></div>-->
 
+<select id="first"></select>
+<select id="second"></select>
 
+<div>
+<h4>Price</h4>
+<div class="">
+  <div id="value-range-price"></div>
+  <div id="slider-range-price"></div>
+</div>
+
+<h4>Year Built</h4>
+<div class="">
+  <div id="value-range-yearBuilt"></div>
+  <div id="slider-range-yearBuilt"></div>
+</div>
+
+<h4>Bedrooms</h4>
+<div class="">
+  <div id="value-range-bedrooms"></div>
+  <div id="slider-range-bedrooms"></div>
+</div>
+
+<h4>Bathrooms</h4>
+<div class="">
+  <div id="value-range-bathrooms"></div>
+  <div id="slider-range-bathrooms"></div>
+</div>
+
+<h4>Floors</h4>
+<div class="">
+  <div id="value-range-floors"></div>
+  <div id="slider-range-floors"></div>
+</div>
+
+<h4><input type="checkbox" id="waterfront-checkbox"> Waterfront</input></h4>
+</div>
 <script src="interactiveMap.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZqVD-AlL3_swjgXmFXr-X_-q7_2B3xsg&libraries=places&callback=initMap"
 async defer></script>
