@@ -3,13 +3,7 @@
 <meta charset="utf-8">
 
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-</head>
-
-
-<body>
-
-<!--Rather than loading v3 or v4, loading individual modules to ensure compatibility with v4 functions (loads newest version of each)-->
+  <!--Rather than loading v3 or v4, loading individual modules to ensure compatibility with v4 functions (loads newest version of each)-->
 <script src="https://d3js.org/d3-geo.v1.min.js"></script>
 <script src="https://d3js.org/d3-selection.v1.min.js"></script>
 <script src="https://d3js.org/d3-array.v1.min.js"></script>
@@ -24,58 +18,84 @@
   <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
   <script src="https://unpkg.com/d3-simple-slider"></script>
   <link data-require="bootstrap-css@*" data-semver="3.2.0" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
-
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
 
 
-<div>
-    <label for="locationFilter">Location Filter:</label>
-    <input type="text" id="locationFilterText" size="1000" readonly style="border:0; color:#4286f4; font-weight:bold;">
-  <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-  <div id="map"></div>
+<body>
+
+
+<div class="container">
+    <h1 id="biaoti">King County Housing Sales Explorer (2014-2015)</h1>
+    <div class="row justify-content-start">
+        <div class="col-3">
+            <div>
+                <h2>Filter</h2>
+
+                <h4>Price</h4>
+                <div class="">
+                  <div id="value-range-price"></div>
+                  <div id="slider-range-price"></div>
+                </div>
+                
+                <h4>Year Built</h4>
+                <div class="">
+                  <div id="value-range-yearBuilt"></div>
+                  <div id="slider-range-yearBuilt"></div>
+                </div>
+                
+                <h4>Bedrooms</h4>
+                <div class="">
+                  <div id="value-range-bedrooms"></div>
+                  <div id="slider-range-bedrooms"></div>
+                </div>
+                
+                <h4>Bathrooms</h4>
+                <div class="">
+                  <div id="value-range-bathrooms"></div>
+                  <div id="slider-range-bathrooms"></div>
+                </div>
+                
+                <h4>Floors</h4>
+                <div class="">
+                  <div id="value-range-floors"></div>
+                  <div id="slider-range-floors"></div>
+                </div>
+                
+                <!--<h4><input type="checkbox" id="waterfront-checkbox"> Waterfront</input></h4>-->
+                </div>
+        </div>
+        <div class="col-8 ">
+              <h2>Plot</h2>
+              <select id="first"></select>
+              <select id="second"></select>
+              <div id="plot"></div>            
+        </div>
+        <div class="col-1">
+            <div>
+                <h2 id="mapFilter">Location Filter</h2>
+             <!--<input id="pac-input" class="controls" type="text" placeholder="Search Box">--> 
+              <div><div id="map"></div></div>
+              <p  id="locationFilterText"> </p>
+
+            </div>
+        </div>
+      </div>
 </div>
+
+
 <!--<form> 
   <span class="style51"><span class="style49">Show</span>:</span> 
 <input id="address" type="text" value="11501" ></input>
 <input id="geocode" type="button" onclick="codeAddress(document.getElementById('address').value);" value="Geocode"></input>	  
 <div id="map_canvas"></div>-->
 
-<select id="first"></select>
-<select id="second"></select>
 
-<div>
-<h4>Price</h4>
-<div class="">
-  <div id="value-range-price"></div>
-  <div id="slider-range-price"></div>
-</div>
 
-<h4>Year Built</h4>
-<div class="">
-  <div id="value-range-yearBuilt"></div>
-  <div id="slider-range-yearBuilt"></div>
-</div>
 
-<h4>Bedrooms</h4>
-<div class="">
-  <div id="value-range-bedrooms"></div>
-  <div id="slider-range-bedrooms"></div>
-</div>
-
-<h4>Bathrooms</h4>
-<div class="">
-  <div id="value-range-bathrooms"></div>
-  <div id="slider-range-bathrooms"></div>
-</div>
-
-<h4>Floors</h4>
-<div class="">
-  <div id="value-range-floors"></div>
-  <div id="slider-range-floors"></div>
-</div>
-
-<h4><input type="checkbox" id="waterfront-checkbox"> Waterfront</input></h4>
-</div>
 <script src="interactiveMap.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZqVD-AlL3_swjgXmFXr-X_-q7_2B3xsg&libraries=places&callback=initMap"
 async defer></script>
