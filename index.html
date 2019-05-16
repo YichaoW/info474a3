@@ -1,22 +1,9 @@
 <html>
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
 
-.states {
-  fill: #ccc;
-  stroke: #fff;
-}
-
-.symbol {
-  fill-opacity: .8;
-  stroke: #fff;
-}
-
-</style>
-<body>
-
-<!--Rather than loading v3 or v4, loading individual modules to ensure compatibility with v4 functions (loads newest version of each)-->
+<head>
+  <!--Rather than loading v3 or v4, loading individual modules to ensure compatibility with v4 functions (loads newest version of each)-->
 <script src="https://d3js.org/d3-geo.v1.min.js"></script>
 <script src="https://d3js.org/d3-selection.v1.min.js"></script>
 <script src="https://d3js.org/d3-array.v1.min.js"></script>
@@ -27,85 +14,91 @@
 <script src="https://d3js.org/d3-request.v0.4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
-
-<script>
-
-
-
-var width = 960,
-    height = 500;
-
-var projection = d3.geoAlbers();
-var path = d3.geoPath()
-	.projection(projection);
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height);
+<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+  <link data-require="bootstrap-css@*" data-semver="3.2.0" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   
-d3.queue()
-    .defer(d3_request.json, "king_county.json")
-    .await(buildMap);
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
 
-function buildMap(error, topology) {
-    const censusTractsGeoJSON = topojson.feature(topology, topology.objects.census_tracts);
 
-    /** Get size of the window, and compute some sizing parameters relative to the window
-     * ...these will be used by projection.fitExtent() below to size and scale the map */
-    const mapWidth = window.innerWidth * 0.8;  // map width will be 80% of the view height (pixels)
-    const mapHeight = window.innerHeight * 0.8; // map height will be 80% of the view height (pixels)
-    const minOfWidthHeight = d3.min([mapWidth, mapHeight]); // take the minimum, and make it square (pixels)
-    const mapPadddingTop = 0; // padding around map geometry (pixels)
-    const mapPadddingLeft = 100; // padding around map geometry (pixels)
+<body>
 
-    /** find the centroid of the topology in long, lat */
-    const mapCentroid = d3.geoCentroid(censusTractsGeoJSON); // [longitude, latitude]
-    const longitudinalRotation = -mapCentroid[0];
 
-    const projection = d3.geoAlbers()
-      .rotate([longitudinalRotation, 0])
-      .fitExtent([[mapPadddingLeft, mapPadddingTop], [minOfWidthHeight, minOfWidthHeight]], censusTractsGeoJSON);
+<div class="container">
+    <h1 id="biaoti">King County Housing Sales Explorer (2014-2015)</h1>
+    <div class="row justify-content-start">
+        <div class="col-3">
+            <div>
+                <h2>Filter</h2>
 
-    /** The geoPath takes in arrays of [long, lat] values and converts them to svg <path> objects */
-    const geoPath = d3.geoPath()
-      .projection(projection);
-  
+                <h4>Price</h4>
+                <div class="">
+                  <div id="value-range-price"></div>
+                  <div id="slider-range-price"></div>
+                </div>
+                
+                <h4>Year Built</h4>
+                <div class="">
+                  <div id="value-range-yearBuilt"></div>
+                  <div id="slider-range-yearBuilt"></div>
+                </div>
+                
+                <h4>Bedrooms</h4>
+                <div class="">
+                  <div id="value-range-bedrooms"></div>
+                  <div id="slider-range-bedrooms"></div>
+                </div>
+                
+                <h4>Bathrooms</h4>
+                <div class="">
+                  <div id="value-range-bathrooms"></div>
+                  <div id="slider-range-bathrooms"></div>
+                </div>
+                
+                <h4>Floors</h4>
+                <div class="">
+                  <div id="value-range-floors"></div>
+                  <div id="slider-range-floors"></div>
+                </div>
+                
+                <!--<h4><input type="checkbox" id="waterfront-checkbox"> Waterfront</input></h4>-->
+                </div>
+        </div>
+        <div class="col-8 ">
+              <h2>Plot</h2>
+              <select id="first"></select>
+              <select id="second"></select>
+              <div id="plot"></div>            
+        </div>
+        <div class="col-1">
+            <div>
+                <h2 id="mapFilter">Location Filter</h2>
+             <!--<input id="pac-input" class="controls" type="text" placeholder="Search Box">--> 
+              <div><div id="map"></div></div>
+              <p  id="locationFilterText"> </p>
 
-    /** append a group (g) to the svg */
-    svg.append('g')
-    /** add the class name 'census_tracts' to the group */
-      .classed('census_tracts', true)
-      /** select any existing path nodes (there aren't any, but this also tells d3 that we're about to join some data to paths) */
-      .selectAll('path')
-      /** create a data join with the array of census tract boundaries (enter, update, exit are the 'selections') */
-      .data(censusTractsGeoJSON.features, function(datum) { return datum.properties.location_id; })
-      /** get the objects representing new data coming into the view 'enter selection' */
-      .enter()
-      /** append an svg <path> node to each of the newly entering objects */
-      .append('path')
-      /** add the class name 'census_tract_boundary' to each path */
-      .classed('census_tract_boundary', true)
-      .attr('d', geoPath)
-      .attr('fill', function (geoDatum) {
-        /** find the mortality datum that has the same location_id as this geo path */
-        const mortalityDatumObject = mortalityByLocationYear[geoDatum.properties.location_id]
-          ? mortalityByLocationYear[geoDatum.properties.location_id][restrictByYear]
-          : undefined;
-        /** check for missing object, return black if we didn't find the right mortality datum */
-        if (mortalityDatumObject === undefined) {
-          return 'black';
-        }
-        /** get the mortality value and convert it from a string to a number */
-        const mortalityValue = +mortalityDatumObject.val;
-        /** return the color scale that corresponds */
-        return colorScale(mortalityValue);
-      });
-}
+            </div>
+        </div>
+      </div>
+</div>
 
-   
 
-</script>
-  
+<!--<form> 
+  <span class="style51"><span class="style49">Show</span>:</span> 
+<input id="address" type="text" value="11501" ></input>
+<input id="geocode" type="button" onclick="codeAddress(document.getElementById('address').value);" value="Geocode"></input>	  
+<div id="map_canvas"></div>-->
+
+
+
+
+<script src="interactiveMap.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZqVD-AlL3_swjgXmFXr-X_-q7_2B3xsg&libraries=places&callback=initMap"
+async defer></script>
 </body>
 </html>
 
