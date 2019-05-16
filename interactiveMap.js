@@ -680,7 +680,7 @@ function drawViz(data) {
             .attr("x", (row) => {return xAxisScale(row.value) - 0.25 * x.bandwidth()})
             .attr("y", (row) => {return y(row.count) - 20})
             .attr("height", (row) => {return y(0) - y(row.count)}).on("mouseover", (row, i) => {
-                changeColor(chart, ".bar", i, "red");
+                changeColor(chart, ".bar", i, "#feb24c");
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);
