@@ -262,15 +262,19 @@ function initMapDataListeners() {
 
     map.data.addListener('click', function(event) {
         if (!clickable) return;
-        currentEvent = event;
-        map.data.revertStyle();
-        shadeSelectedRegion();
-
-        markers.forEach(m=>m.setMap(null));
-        markers = [];
-
-        centerMap(11, {lat: event.latLng.lat(), lng: event.latLng.lng()});
+        if (!currentEvent || currentEvent.feature.l.OBJECTID != event.feature.l.OBJECTID) {
+            currentEvent = event;
+            map.data.revertStyle();
+            shadeSelectedRegion();
+           /* markers.forEach(m=>m.setMap(null));
+            markers = [];*/
+            centerMap(11, {lat: event.latLng.lat(), lng: event.latLng.lng()});
+        } else {
         
+            currentEvent = null;
+            map.data.revertStyle();
+    
+        }
       /*  data.forEach(d=>{
             if (currentEvent.feature.l.ZIP == d.zipcode) {
                 var markerImage = {
