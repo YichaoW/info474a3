@@ -301,11 +301,16 @@ function renderSummaryText(event) {
             return +d.price;
         }
     });
-    $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP} <br> # of sold houses: ${sum}<br> Min Price: ${extentPrice[0]}<br> Max Price: ${extentPrice[1]}<br> Mean Price: ${meanPrice.toFixed(2)}<br> Median Price: ${medianPrice}`)
+    $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP} <br> 
+                                   # of sold houses: ${sum}<br> 
+                                   Min Price: ${d3.format(",")(extentPrice[0])}<br> 
+                                   Max Price: ${d3.format(",")(extentPrice[1])}<br> 
+                                   Mean Price: ${d3.format(",")(meanPrice.toFixed(0))}<br> 
+                                   Median Price: ${d3.format(",")(medianPrice)}`)
 }
 
 function loaddata() {
-    d3.csv("kc_house_data.csv", (error, data) => {
+    d3.csv("data/kc_house_data.csv", (error, data) => {
         if (error) return console.warn(error);
         data.forEach(row => {
             for (let i = 2; i < data.columns.length; i++) {
