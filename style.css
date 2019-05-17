@@ -11,12 +11,18 @@ body {
 
 }
 
+#locationFilterText {
+  margin-top: 1rem;
+}
+.boxSection {
+  padding: 1rem;
+}
 #filterSection, #plotSection, #mapSection {
   background-color: white;
   width: 100%;
   margin: 1rem;
   padding: 2rem;
-  overflow: hidden;
+  overflow: scroll;
 }
 
 
@@ -45,7 +51,7 @@ nav {
 
 #map {
   height: 500px;
-  width: 500px;
+  width: 450px;
 }
 
 /* Optional: Makes the sample page fill the window. */
