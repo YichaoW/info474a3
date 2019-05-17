@@ -119,21 +119,76 @@ function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: origin,
         zoom: 8,
-        draggable: false
+        draggable: false,
+        styles: [
+            {
+            "featureType": "water",
+            "elementType": "geometry",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            },{
+            "featureType": "landscape",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            },{
+            "featureType": "road",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            },{
+            "featureType": "administrative",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            },{
+            "featureType": "poi",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            },{
+            "featureType": "administrative",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            },{
+            "elementType": "labels",
+            "stylers": [
+              { "visibility": "off" }
+            ]}],
+            backgroundColor: '#FFF',
+            color: 'red',
+            disableDefaultUI: true,
+            draggable: false,
+            scaleControl: false,
+            scrollwheel: false,
     });
 
-    map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson');
-    map.data.setStyle({
-        fillColor: '#00000000',
-        strokeWeight: 2,
-        strokeColor:"#4286f4"
-    });
+    map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson',{idPropertyName: "ZIPCODE"});
+    
+   
 
+
+    map.data.setStyle(feature=>{
+        var color = "#bdbdbd"
+        if (getSumForZip(feature.l.ZIP)==0) {
+            color = "#636363"
+        } 
+        return {
+            fillColor: color,
+            strokeWeight: 2,
+        };
+
+    });
+    
     setLimitBounds();
   //  initSearchBox();
 
     loaddata();
 }
+
+
 
 function centerMap(zoomNum, position) {
     map.setZoom(zoomNum);
@@ -219,12 +274,7 @@ function setLimitBounds() {
 
 function initMapDataListeners() {
     map.data.addListener('mouseover', async function(event) {
-        const sum = dataset.reduce((total, row)=>{
-            if (event.feature.l.ZIP == row.zipcode){
-                return ++total;
-            }
-            return total;
-        },0);
+        const sum = getSumForZip(event.feature.l.ZIP);
 
         $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`)
 
@@ -233,7 +283,7 @@ function initMapDataListeners() {
             shadeSelectedRegion();
             if (sum == 0) {
                 clickable = false;
-                map.data.overrideStyle(event.feature, {fillColor: "gray"});
+                map.data.overrideStyle(event.feature, {fillColor: "#636363"});
             } else {
                 renderSummaryText(event)
                 map.data.overrideStyle(event.feature, {fillColor: "red"});
@@ -253,7 +303,7 @@ function initMapDataListeners() {
             shadeSelectedRegion();
            /* markers.forEach(m=>m.setMap(null));
             markers = [];*/
-            centerMap(10, {lat: event.latLng.lat(), lng: event.latLng.lng()});
+           // centerMap(9, {lat: event.latLng.lat(), lng: event.latLng.lng()});
         } else {
             currentEvent = null;
             map.data.revertStyle();
@@ -280,12 +330,8 @@ function initMapDataListeners() {
 
 function renderSummaryText(event) {
     if (!event) return;
-    const sum = dataset.reduce((total, row)=>{
-        if (event.feature.l.ZIP == row.zipcode){
-            return ++total;
-        }
-        return total;
-    },0);
+    const sum = getSumForZip(event.feature.l.ZIP);
+    
     var extentPrice =  d3.extent(dataset, d=>{
         if (event.feature.l.ZIP == d.zipcode){
             return +d.price;
@@ -358,6 +404,15 @@ function loaddata() {
         initMapDataListeners();
         initFilter();
     });
+}
+
+function getSumForZip(zip) {
+     return dataset.reduce((total, row)=>{
+        if (zip == row.zipcode){
+            return ++total;
+        }
+        return total;
+    },0);
 }
 
 function initFilter() {
