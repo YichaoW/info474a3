@@ -3,6 +3,8 @@ var dataset;
 var markers=[];
 var pmarkers=[];
 var houseInfoWindows=[]; 
+var zipcodes=new Map();
+var infowindow;
 var currentEvent;
 var clickable = true;
 
@@ -122,57 +124,32 @@ function initMap() {
         draggable: false,
         styles: [
             {
-            "featureType": "water",
-            "elementType": "geometry",
+            "featureType": "all",
             "stylers": [
               { "visibility": "off" }
             ]
-            },{
-            "featureType": "landscape",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-            },{
-            "featureType": "road",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-            },{
-            "featureType": "administrative",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-            },{
-            "featureType": "poi",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-            },{
-            "featureType": "administrative",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-            },{
-            "elementType": "labels",
-            "stylers": [
-              { "visibility": "off" }
-            ]}],
-            backgroundColor: '#FFF',
-            color: 'red',
-            disableDefaultUI: true,
-            draggable: false,
-            scaleControl: false,
-            scrollwheel: false,
+            }],
+        backgroundColor: '#FFF',
+        disableDefaultUI: true,
+        draggable: false,
+        scaleControl: false,
+        scrollwheel: false,
     });
 
-    map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson',{idPropertyName: "ZIPCODE"});
+    map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson',{idPropertyName: "OBJECTID"});
     
    
 
 
     map.data.setStyle(feature=>{
-        var color = "#bdbdbd"
-        if (getSumForZip(feature.l.ZIP)==0) {
+        var color = "#bdbdbd";
+        var zip = feature.l.ZIP;
+        if (zipcodes.has(zip)) {
+            zipcodes.get(zip).push(feature.l.OBJECTID);
+        } else {
+            zipcodes.set(zip,[feature.l.OBJECTID]);
+        }
+        if (getSumForZip(zip)==0) {
             color = "#636363"
         } 
         return {
@@ -181,6 +158,8 @@ function initMap() {
         };
 
     });
+
+    infowindow = new google.maps.InfoWindow();
     
     setLimitBounds();
   //  initSearchBox();
@@ -197,7 +176,8 @@ function centerMap(zoomNum, position) {
 
 function shadeSelectedRegion() {
     if (currentEvent) {
-        map.data.overrideStyle(currentEvent.feature, {fillColor: "green"});
+        renderRegionByZip(currentEvent.feature.l.ZIP, "green");
+       // map.data.overrideStyle(currentEvent.feature, {fillColor: "green"});
     }
 }
 
@@ -272,63 +252,60 @@ function setLimitBounds() {
     });
 }
 
+function renderRegionByZip(zip,color) {
+    zipcodes.get(zip).forEach(id=>{
+        map.data.overrideStyle(map.data.getFeatureById(id), {fillColor: color});
+    })
+}
+
 function initMapDataListeners() {
+    
     map.data.addListener('mouseover', async function(event) {
         const sum = getSumForZip(event.feature.l.ZIP);
-
-        $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`)
-
-        if (!currentEvent || currentEvent.feature.l.OBJECTID != event.feature.l.OBJECTID) {
+        infowindow.close();
+       // $("#locationFilterText").html()
+        infowindow.setContent(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`);
+        infowindow.setPosition({lat:event.latLng.lat(),lng:event.latLng.lng()});
+        if (!currentEvent || currentEvent.feature.l.ZIP != event.feature.l.ZIP) {
             map.data.revertStyle();
             shadeSelectedRegion();
             if (sum == 0) {
                 clickable = false;
                 map.data.overrideStyle(event.feature, {fillColor: "#636363"});
             } else {
-                renderSummaryText(event)
-                map.data.overrideStyle(event.feature, {fillColor: "red"});
+                infowindow.setContent(getSummaryText(event));
+                renderRegionByZip(event.feature.l.ZIP, "red");
             }
-        } else {
-            renderSummaryText(event);
         }
         
 
+        infowindow.open(map);
     });
 
     map.data.addListener('click', function(event) {
         if (!clickable) return;
-        if (!currentEvent || currentEvent.feature.l.OBJECTID != event.feature.l.OBJECTID) {
+        if (!currentEvent || currentEvent.feature.l.ZIP != event.feature.l.ZIP) {
             currentEvent = event;
             map.data.revertStyle();
             shadeSelectedRegion();
-           /* markers.forEach(m=>m.setMap(null));
-            markers = [];*/
-           // centerMap(9, {lat: event.latLng.lat(), lng: event.latLng.lng()});
+            $("#locationFilterText").html(getSummaryText(event));
         } else {
             currentEvent = null;
+            $("#locationFilterText").html("");
             map.data.revertStyle();
         }
-
-        /*let currentZip = event.feature.l.ZIP; 
-        if (filters.zip && filters.zip === currentZip) {
-            filters.zip = null;
-        } else {
-            filters.zip = currentZip;
-        }*/
         filterData();
     });
 
     map.data.addListener('mouseout', function(event) {
         clickable = true;
-      //  infowindow.close();
+        infowindow.close();
         map.data.revertStyle();
-        shadeSelectedRegion();
-        renderSummaryText(currentEvent);
-        
+        shadeSelectedRegion();        
     });
 }
 
-function renderSummaryText(event) {
+function getSummaryText(event) {
     if (!event) return;
     const sum = getSumForZip(event.feature.l.ZIP);
     
@@ -347,12 +324,12 @@ function renderSummaryText(event) {
             return +d.price;
         }
     });
-    $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP} <br> 
-                                   # of sold houses: ${sum}<br> 
-                                   Min Price: ${d3.format(",")(extentPrice[0])}<br> 
-                                   Max Price: ${d3.format(",")(extentPrice[1])}<br> 
-                                   Mean Price: ${d3.format(",")(meanPrice.toFixed(0))}<br> 
-                                   Median Price: ${d3.format(",")(medianPrice)}`)
+    return `ZIP: ${event.feature.l.ZIP} <br> 
+            # of sold houses: ${sum}<br> 
+            Min Price: ${d3.format(",")(extentPrice[0])}<br> 
+            Max Price: ${d3.format(",")(extentPrice[1])}<br> 
+            Mean Price: ${d3.format(",")(meanPrice.toFixed(0))}<br> 
+            Median Price: ${d3.format(",")(medianPrice)}`
 }
 
 function loaddata() {
