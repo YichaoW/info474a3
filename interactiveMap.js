@@ -287,7 +287,7 @@ function initMapDataListeners() {
             currentEvent = event;
             map.data.revertStyle();
             shadeSelectedRegion();
-            $("#locationFilterText").html("<h3>Filtered Information</h3>"+getSummaryText(event));
+            $("#locationFilterText").html("<h3>Location Summary</h3>"+getSummaryText(event));
         } else {
             currentEvent = null;
             $("#locationFilterText").html("");
@@ -425,7 +425,7 @@ function initFilter() {
     let priceRange = d3
         .select('div#slider-range-price')
         .append('svg')
-        .attr('width', 500)
+        .attr('width', 300)
         .attr('height', 100)
         .append('g')
         .attr('transform', 'translate(30,30)');
