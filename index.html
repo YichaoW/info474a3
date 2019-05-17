@@ -20,18 +20,20 @@
   <link data-require="bootstrap-css@*" data-semver="3.2.0" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  
-    <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="style.css">
+
 </head>
 
 
 <body>
-
-
-<div class="container">
-    <h1 id="biaoti">King County Housing Sales Explorer (2014-2015)</h1>
-    <div class="row justify-content-start">
-        <div class="col-3">
+  <!-- Image and text -->
+  <nav class="navbar navbar-dark bg-dark"> 
+      <span id="visTitle" class="navbar-brand mb-0 h1">King County House Sales Explorer in 2014 and 2015</span>
+    </nav>
+       
+  <div id="container">  
+    <div class="row">
+        <div class="col-2 shadow p-3 mb-5 bg-white rounded" id="filterSection">
             <div>
                 <h2>Filter</h2>
 
@@ -68,13 +70,15 @@
                 <!--<h4><input type="checkbox" id="waterfront-checkbox"> Waterfront</input></h4>-->
                 </div>
         </div>
-        <div class="col-8 ">
+        <div class="col-6 shadow p-3 mb-5 bg-white rounded" id="plotSection">
               <h2>Plot</h2>
-              <select id="first"></select>
-              <select id="second"></select>
+              <div class="row">
+                <div class="col"><select class="custom-select" id="first"></select></div>
+                <div class="col"><select class="custom-select" id="second"></select></div>
+              </div>
               <div id="plot"></div>            
         </div>
-        <div class="col-1">
+        <div class="col shadow p-3 mb-5 bg-white rounded" id="mapSection">
             <div>
                 <h2 id="mapFilter">Location Filter</h2>
               <!-- <input type="text" >--> 

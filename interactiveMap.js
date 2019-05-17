@@ -120,7 +120,7 @@ selects.forEach((select, i) => {
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: origin,
-        zoom: 8,
+        zoom: 7.5,
         draggable: false,
         styles: [
             {
@@ -263,7 +263,6 @@ function initMapDataListeners() {
     map.data.addListener('mouseover', async function(event) {
         const sum = getSumForZip(event.feature.l.ZIP);
         infowindow.close();
-       // $("#locationFilterText").html()
         infowindow.setContent(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`);
         infowindow.setPosition({lat:event.latLng.lat(),lng:event.latLng.lng()});
         if (!currentEvent || currentEvent.feature.l.ZIP != event.feature.l.ZIP) {
@@ -288,7 +287,7 @@ function initMapDataListeners() {
             currentEvent = event;
             map.data.revertStyle();
             shadeSelectedRegion();
-            $("#locationFilterText").html(getSummaryText(event));
+            $("#locationFilterText").html("<h3>Filtered Information</h3>"+getSummaryText(event));
         } else {
             currentEvent = null;
             $("#locationFilterText").html("");
