@@ -53,14 +53,12 @@ let axisRefName = {
     "sqft_living": "Living Space (foot square)",
     "sqft_lot": "Land Space (foot square)",
     "floors": "# of Floors",
-    "waterfront": "apartment is overlooking waterfront",
     "view": "Goodness of the House View",
     "condition": "House Condition",
     "grade": "Goodness of Design", 
     "sqft_above": "Space above Ground Level (foot square)", 
     "sqft_basement": "Basement Space (foot square)", 
     "yr_built": "Year Built", 
-    "yr_renovated": "Year of the Last Renovation", 
     "sqft_living15": "Living Space of Neighborhood (foot square)", 
     "sqft_lot15": "Land Space of Neighborhood (foot square)"
 }
@@ -123,12 +121,18 @@ $("#zipSearchButton").click(e=>{
 
     zip = parseInt(zip);
     var zipExist = zipcodes.get(zip);
-    if (zipExist && zip != currentZip) {
+    if (zipExist && zip != currentZip && getSumForZip(zip) != 0) {
         shadeRegionByZip(zip);
-    } else if (!zipExist) {
+    } else if (!zipExist || getSumForZip(zip) == 0) {
         $("#warnSection").removeAttr("hidden");
     }
 })
+
+$("#clearSearchButton").click(e=>{
+    $("#warnSection").attr("hidden", "");
+    $("#zipSearchText").val("");
+    unselectRegion();
+});
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
@@ -217,10 +221,15 @@ function shadeRegionByZip(zip) {
         shadeSelectedRegion();
         $("#locationFilterText").html("<h3>Location Summary</h3>"+getSummaryText(zip));
     } else {
-        currentZip = null;
-        $("#locationFilterText").html("");
-        map.data.revertStyle();
+        unselectRegion();
     }
+    filterData();
+}
+
+function unselectRegion() {
+    currentZip = null;
+    $("#locationFilterText").html("");
+    map.data.revertStyle();
     filterData();
 }
 
