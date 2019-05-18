@@ -3,8 +3,9 @@ var dataset;
 var markers=[];
 var pmarkers=[];
 var houseInfoWindows=[]; 
-var currentEvent;
-var clickable = true;
+var zipcodes=new Map();
+var infowindow;
+var currentZip;
 
 var origin = {lat: 47.277330, lng: -121.513281};
 
@@ -113,30 +114,70 @@ selects.forEach((select, i) => {
 })
 
 
+$("#zipSearchButton").click(e=>{
+    $("#warnSection").attr("hidden", "");
 
+    var zip = $("#zipSearchText").val();
+    zip = parseInt(zip);
+    var zipExist = zipcodes.get(zip);
+    if (zipExist && zip != currentZip) {
+        shadeRegionByZip(zip);
+    } else if (!zipExist) {
+        $("#warnSection").removeAttr("hidden");
+    }
+})
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: origin,
-        zoom: 7,
+        zoom: 7.5,
         draggable: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        scrollwheel: true
+        styles: [
+            {
+            "featureType": "all",
+            "stylers": [
+              { "visibility": "off" }
+            ]
+            }],
+        backgroundColor: '#FFF',
+        disableDefaultUI: true,
+        draggable: false,
+        scaleControl: false,
+        scrollwheel: false,
     });
 
-    map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson');
-    map.data.setStyle({
-        fillColor: '#00000000',
-        strokeWeight: 2,
-        strokeColor:"#4286f4"
+    map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson',{idPropertyName: "OBJECTID"});
+    
+   
+
+
+    map.data.setStyle(feature=>{
+        var color = "#bdbdbd";
+        var zip = feature.l.ZIP;
+        if (zipcodes.has(zip)) {
+            zipcodes.get(zip).push(feature.l.OBJECTID);
+        } else {
+            zipcodes.set(zip,[feature.l.OBJECTID]);
+        }
+        if (getSumForZip(zip)==0) {
+            color = "#636363"
+        } 
+        return {
+            fillColor: color,
+            strokeWeight: 2,
+        };
+
     });
 
+    infowindow = new google.maps.InfoWindow();
+    
     setLimitBounds();
   //  initSearchBox();
 
     loaddata();
 }
+
+
 
 function centerMap(zoomNum, position) {
     map.setZoom(zoomNum);
@@ -144,74 +185,12 @@ function centerMap(zoomNum, position) {
 }
 
 function shadeSelectedRegion() {
-    if (currentEvent) {
-        map.data.overrideStyle(currentEvent.feature, {fillColor: "green"});
+    if (currentZip) {
+        renderRegionByZip(currentZip, "green");
     }
 }
 
-function initSearchBox() {
-    // Create the search box and link it to the UI element.
-    var input = document.getElementById('pac-input');
-    var searchBox = new google.maps.places.SearchBox(input);
-    map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
-    // Bias the SearchBox results towards current map's viewport.
-    map.addListener('bounds_changed', function() {
-    searchBox.setBounds(map.getBounds());
-    });
-
-        
-    // Listen for the event fired when the user selects a prediction and retrieve
-    // more details for that place.
-    searchBox.addListener('places_changed', function() {
-        var places = searchBox.getPlaces();
-        if (places.length == 0) {
-            return;
-        }
-        // Clear out the old markers.
-        pmarkers.forEach(function(marker) {
-            marker.setMap(null);
-        });
-        pmarkers = [];
-
-        // For each place, get the icon, name and location.
-        var bounds = new google.maps.LatLngBounds();
-        places.forEach(function(place) {
-            if (!place.geometry) {
-                console.log("Returned place contains no geometry");
-                return;
-            }
-            var icon = {
-                url: place.icon,
-                size: new google.maps.Size(71, 71),
-                origin: new google.maps.Point(0, 0),
-                anchor: new google.maps.Point(17, 34),
-                scaledSize: new google.maps.Size(25, 25)
-            };
-
-            // Create a marker for each place.
-            pmarkers.push(new google.maps.Marker({
-                map: map,
-                icon: icon,
-                title: place.name,
-                position: place.geometry.location
-            }));
-
-            if (place.geometry.viewport) {
-            // Only geocodes have viewport.
-                bounds.union(place.geometry.viewport);
-            } else {
-                bounds.extend(place.geometry.location);
-            }
-        });
-        if (places.length <= 1) {
-            centerMap(12, places[0].geometry.location);
-        } else {
-            map.fitBounds(bounds);
-        }
-
-    });
-}
 
 function setLimitBounds() {
     var minZoomLevel = 7;
@@ -220,100 +199,92 @@ function setLimitBounds() {
     });
 }
 
+function renderRegionByZip(zip,color) {
+    zipcodes.get(zip).forEach(id=>{
+        map.data.overrideStyle(map.data.getFeatureById(id), {fillColor: color});
+    })
+}
+
+function zipClickable(zip) {
+    return getSumForZip(zip)!=0;
+}
+
+function shadeRegionByZip(zip) {
+    if (currentZip != zip) {
+        currentZip = zip;
+        map.data.revertStyle();
+        shadeSelectedRegion();
+        $("#locationFilterText").html("<h3>Location Summary</h3>"+getSummaryText(zip));
+    } else {
+        currentZip = null;
+        $("#locationFilterText").html("");
+        map.data.revertStyle();
+    }
+    filterData();
+}
+
 function initMapDataListeners() {
+    
     map.data.addListener('mouseover', async function(event) {
-        const sum = dataset.reduce((total, row)=>{
-            if (event.feature.l.ZIP == row.zipcode){
-                return ++total;
-            }
-            return total;
-        },0);
-
-        $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`)
-
-        if (!currentEvent || currentEvent.feature.l.OBJECTID != event.feature.l.OBJECTID) {
+        const sum = getSumForZip(event.feature.l.ZIP);
+        infowindow.close();
+        infowindow.setContent(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`);
+        infowindow.setPosition({lat:event.latLng.lat(),lng:event.latLng.lng()});
+        if (currentZip != event.feature.l.ZIP) {
             map.data.revertStyle();
             shadeSelectedRegion();
             if (sum == 0) {
-                clickable = false;
-                map.data.overrideStyle(event.feature, {fillColor: "gray"});
+                map.data.overrideStyle(event.feature, {fillColor: "#636363"});
             } else {
-                renderSummaryText(event)
-                map.data.overrideStyle(event.feature, {fillColor: "red"});
+                infowindow.setContent(getSummaryText(event.feature.l.ZIP));
+                renderRegionByZip(event.feature.l.ZIP, "red");
             }
-        } else {
-            renderSummaryText(event);
-        }
-        displayMapToolTip(event);
+        }        
+
+        infowindow.open(map);
     });
 
     map.data.addListener('click', function(event) {
-        if (!clickable) return;
-        if (!currentEvent || currentEvent.feature.l.OBJECTID != event.feature.l.OBJECTID) {
-            currentEvent = event;
-            map.data.revertStyle();
-            shadeSelectedRegion();
-           /* markers.forEach(m=>m.setMap(null));
-            markers = [];*/
-            centerMap(10, {lat: event.latLng.lat(), lng: event.latLng.lng()});
-        } else {
-            currentEvent = null;
-            map.data.revertStyle();
-        }
-        if (currentEvent) {
-            filters.zip = currentEvent.feature.l.ZIP;
-        } else {
-            filters.zip = null;
-        }
-        filterData();
+        if (!zipClickable(event.feature.l.ZIP) ) return;
+        shadeRegionByZip(event.feature.l.ZIP);
     });
 
     map.data.addListener('mouseout', function(event) {
-        clickable = true;
-      //  infowindow.close();
+        infowindow.close();
         map.data.revertStyle();
-        shadeSelectedRegion();
-        renderSummaryText(currentEvent);
-        document.getElementById("map-tooltip").style.display = "none";
+        shadeSelectedRegion();        
     });
 }
 
-function displayMapToolTip(event) {
-    let mapToolTip = document.getElementById("map-tooltip");
-    mapToolTip.style.display = "block";
-    mapToolTip.style.width = "150px";
-    mapToolTip.style.top = event.wa.screenY
-    mapToolTip.style.left = event.wa.screenX + 400
-}
+function getSummaryText(zip) {
+    const sum = getSumForZip(zip);
+    
 
-function renderSummaryText(event) {
-    if (!event) return;
-    const sum = dataset.reduce((total, row)=>{
-        if (event.feature.l.ZIP == row.zipcode){
-            return ++total;
-        }
-        return total;
-    },0);
     var extentPrice =  d3.extent(dataset, d=>{
-        if (event.feature.l.ZIP == d.zipcode){
+        if (zip == d.zipcode){
             return +d.price;
         }
     });
     var meanPrice =  d3.mean(dataset, d=>{
-        if (event.feature.l.ZIP == d.zipcode){
+        if (zip == d.zipcode){
             return +d.price;
         }
     });
     var medianPrice =  d3.median(dataset, d=>{
-        if (event.feature.l.ZIP == d.zipcode){
+        if (zip == d.zipcode){
             return +d.price;
         }
     });
-    $("#map-tooltip").html(`ZIP: ${event.feature.l.ZIP} <br> # of sold houses: ${sum}<br> Min Price: ${extentPrice[0]}<br> Max Price: ${extentPrice[1]}<br> Mean Price: ${meanPrice.toFixed(2)}<br> Median Price: ${medianPrice}`)
+    return `ZIP: ${zip} <br> 
+            # of sold houses: ${sum}<br> 
+            Min Price: ${d3.format(",")(extentPrice[0])}<br> 
+            Max Price: ${d3.format(",")(extentPrice[1])}<br> 
+            Mean Price: ${d3.format(",")(meanPrice.toFixed(0))}<br> 
+            Median Price: ${d3.format(",")(medianPrice)}`
 }
 
 function loaddata() {
-    d3.csv("kc_house_data.csv", (error, data) => {
+    d3.csv("data/kc_house_data.csv", (error, data) => {
         if (error) return console.warn(error);
         data.forEach(row => {
             for (let i = 2; i < data.columns.length; i++) {
@@ -361,6 +332,15 @@ function loaddata() {
         initMapDataListeners();
         initFilter();
     });
+}
+
+function getSumForZip(zip) {
+     return dataset.reduce((total, row)=>{
+        if (zip == row.zipcode){
+            return ++total;
+        }
+        return total;
+    },0);
 }
 
 function initFilter() {
@@ -569,8 +549,8 @@ function initFilter() {
 }
 
 function filterData() {
-    if (currentEvent) {
-        filters.zip = currentEvent.feature.l.ZIP;
+    if (currentZip) {
+        filters.zip = currentZip;
     } else {
         filters.zip = null;
     }
@@ -695,7 +675,7 @@ function drawViz(data) {
             .attr("x", (row) => {return xAxisScale(row.value) - 0.25 * x.bandwidth()})
             .attr("y", (row) => {return y(row.count) - 20})
             .attr("height", (row) => {return y(0) - y(row.count)}).on("mouseover", (row, i) => {
-                changeColor(chart, ".bar", i, "red");
+                changeColor(chart, ".bar", i, "#feb24c");
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);

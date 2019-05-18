@@ -1,15 +1,50 @@
 /* Always set the map height explicitly to define the size of the div
    * element that contains the map. */
-.container, .col, .row {
-  padding:0;
-  margin:0;
+body {
+  background-color: rgb(245,245,245);
 }
 
-#biaoti {
-  font-size: 4rem;
-  margin: 2rem;
-  text-align: center;
+#container {
+  margin-left: 3rem;
+  margin-right: 3rem;
+  padding: 0;
+
 }
+
+#warn {
+  margin:0;
+  vertical-align: middle;
+}
+
+#locationFilterText {
+  margin-top: 1rem;
+}
+.boxSection {
+  padding: 1rem;
+}
+#filterSection, #plotSection, #mapSection {
+  background-color: white;
+  width: 100%;
+  margin: 1rem;
+  padding: 2rem;
+  overflow: scroll;
+}
+
+
+
+h2 {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+nav {
+  color: rgb(40,49,55)
+}
+
+#visTitle {
+  font-size: 2rem;
+}
+
 #mapFilter, #locationFilterText {
   width: 600px;
 }
@@ -20,8 +55,8 @@
 
 
 #map {
-  height: 350px;
-  width: 350px;
+  height: 500px;
+  width: 450px;
 }
 
 /* Optional: Makes the sample page fill the window. */

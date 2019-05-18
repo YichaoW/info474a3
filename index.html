@@ -7,77 +7,97 @@
 <script src="https://d3js.org/d3-geo.v1.min.js"></script>
 <script src="https://d3js.org/d3-selection.v1.min.js"></script>
 <script src="https://d3js.org/d3-array.v1.min.js"></script>
-<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="https://d3js.org/topojson.v1.min.js"></script>
 <script src="https://d3js.org/d3-collection.v0.1.min.js"></script>
 <script src="https://d3js.org/d3-dispatch.v0.4.min.js"></script>
 <script src="https://d3js.org/d3-dsv.v0.3.min.js"></script>
 <script src="https://d3js.org/d3-request.v0.4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
-  <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="https://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
   <script src="https://unpkg.com/d3-simple-slider"></script>
   <link data-require="bootstrap-css@*" data-semver="3.2.0" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  
-    <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="style.css">
+
 </head>
 
 
 <body>
+  <!-- Image and text -->
+  <nav class="navbar navbar-dark bg-dark"> 
+      <span id="visTitle" class="navbar-brand mb-0 h1">King County House Sales Explorer in 2014 and 2015</span>
+    </nav>
+       
+  <div id="container">  
+    <div class="row">
+        <div class="col-2 shadow p-3 mb-5 bg-white rounded" id="filterSection">
+            <div class="boxSection">
+                <h2>Filter</h2>
 
-
-<div class="container">
-    <h1 id="biaoti">King County Housing Sales Explorer (2014-2015)</h1>
-    <div class="content">
-        <div class="filter-container">
-            <h2>Filter</h2>
-
-            <h4>Price</h4>
-            <div class="">
-              <div id="value-range-price"></div>
-              <div id="slider-range-price"></div>
-            </div>
-            
-            <h4>Year Built</h4>
-            <div class="">
-              <div id="value-range-yearBuilt"></div>
-              <div id="slider-range-yearBuilt"></div>
-            </div>
-            
-            <h4>Bedrooms</h4>
-            <div class="">
-              <div id="value-range-bedrooms"></div>
-              <div id="slider-range-bedrooms"></div>
-            </div>
-            
-            <h4>Bathrooms</h4>
-            <div class="">
-              <div id="value-range-bathrooms"></div>
-              <div id="slider-range-bathrooms"></div>
-            </div>
-            
-            <h4>Floors</h4>
-            <div class="">
-              <div id="value-range-floors"></div>
-              <div id="slider-range-floors"></div>
-            </div>
-        </div>
-        <div class="plot-container">
-              <h2>Plot</h2>
-              <div class="attr-container" >
-                <select id="first"></select>
-                <select id="second"></select>
-              </div>
-              <div id="plot"></div>            
-        </div>
-        <div class="map-container">
-            <div>
-                <h2 id="mapFilter">Location Filter</h2> 
-                <div id="map"></div>
-                <div id="map-tooltip">
+                <h4>Price</h4>
+                <div class="">
+                  <div id="value-range-price"></div>
+                  <div id="slider-range-price"></div>
                 </div>
+                
+                <h4>Year Built</h4>
+                <div class="">
+                  <div id="value-range-yearBuilt"></div>
+                  <div id="slider-range-yearBuilt"></div>
+                </div>
+                
+                <h4>Bedrooms</h4>
+                <div class="">
+                  <div id="value-range-bedrooms"></div>
+                  <div id="slider-range-bedrooms"></div>
+                </div>
+                
+                <h4>Bathrooms</h4>
+                <div class="">
+                  <div id="value-range-bathrooms"></div>
+                  <div id="slider-range-bathrooms"></div>
+                </div>
+                
+                <h4>Floors</h4>
+                <div class="">
+                  <div id="value-range-floors"></div>
+                  <div id="slider-range-floors"></div>
+                </div>
+              </div>
+        </div>
+        <div class="col-6 shadow p-3 mb-5 bg-white rounded" id="plotSection">
+          <div  class="boxSection">
+              <h2>Plot</h2>
+              <div class="row">
+                <div class="col"><select class="custom-select" id="first"></select></div>
+                <div class="col"><select class="custom-select" id="second"></select></div>
+              </div>
+              <div id="plot"></div> 
+            </div>           
+        </div>
+        <div class="col shadow p-3 mb-5 bg-white rounded" id="mapSection">
+            <div class="boxSection">
+                  <h2 id="mapFilter">Location Filter</h2>
+                  <div class="row">
+                    <div class="col-8">
+                        <div class="input-group mb-1">
+                            <input type="text" id="zipSearchText" class="form-control" placeholder="Search by zipcode" maxlength="10">
+                            <div class="input-group-append">
+                              <button class="btn btn-outline-secondary" type="button" id="zipSearchButton">Search</button>
+                            </div>                    
+                        </div>
+                    </div>
+                    <div class="col" id="warnSection" hidden>
+                        <div class="alert alert-danger" role="alert">
+                            Not found.
+                          </div>
+                    </div>
+                </div>
+              <div><div id="map"></div></div>
+              <p  id="locationFilterText"> </p>
             </div>
       </div>
 </div>
