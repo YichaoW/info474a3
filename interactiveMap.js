@@ -7,7 +7,7 @@ var zipcodes=new Map();
 var infowindow;
 var currentZip;
 
-var origin = {lat: 47.477330, lng: -121.513281};
+var origin = {lat: 47.277330, lng: -121.513281};
 
 let width = 750;
 let height = 750;
@@ -190,8 +190,10 @@ function shadeSelectedRegion() {
     }
 }
 
+
+
 function setLimitBounds() {
-    var minZoomLevel = 8;
+    var minZoomLevel = 7;
     google.maps.event.addListener(map, 'zoom_changed', function() {
         if (map.getZoom() < minZoomLevel) map.setZoom(minZoomLevel);
     });
@@ -237,8 +239,7 @@ function initMapDataListeners() {
                 infowindow.setContent(getSummaryText(event.feature.l.ZIP));
                 renderRegionByZip(event.feature.l.ZIP, "red");
             }
-        }
-        
+        }        
 
         infowindow.open(map);
     });
@@ -258,6 +259,7 @@ function initMapDataListeners() {
 function getSummaryText(zip) {
     const sum = getSumForZip(zip);
     
+
     var extentPrice =  d3.extent(dataset, d=>{
         if (zip == d.zipcode){
             return +d.price;
@@ -567,6 +569,21 @@ function filterData() {
     drawViz(filterData);
 }
 
+function filterData() {
+    let filterData = dataset.filter((row) => {
+        let zip = !filters.zip || row.zipcode === filters.zip;
+        let price = filters.price[0] <= row.price && row.price <= filters.price[1];
+        let year = filters.year[0] <= row["yr_built"] && row["yr_built"] <= filters.year[1];
+        let bedroom = filters.bedroom[0] <= row["bedrooms"] && row["bedrooms"] <= filters.bedroom[1];
+        let bathroom = filters.bathroom[0] <= row["bathrooms"] && row["bathrooms"] <= filters.bathroom[1];
+        let floor = filters.floor[0] <= row["floors"] && row["floors"] <= filters.floor[1];
+        return zip && price && year && bedroom && bathroom && floor;
+    })
+    clearAxis();
+    drawCoordinates(filterData);
+    drawViz(filterData);
+}
+
 function drawViz(data) {
     if (xAxis !== "none" && yAxis !== "none") {
         clearGraph();
@@ -777,7 +794,7 @@ function drawCoordinates(data) {
             .attr("x", 300)
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(xName);
+            .text("X: " + xName);
 
     svg.append("text")
             .attr("class", "axis-text") 
@@ -786,7 +803,7 @@ function drawCoordinates(data) {
             .attr("x",0 - (height / 2) + 40)
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(yName);
+            .text("Y: " + yName);
 }
 
 function getCountOptimum(data, name) {

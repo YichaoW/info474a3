@@ -165,3 +165,61 @@ html, body {
   border-radius: 3px;
   padding: 0.2rem;
 }
+
+.content {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filter-container {
+  margin: 0;
+}
+
+.filter-container {
+    width: 280px;
+    background-color: #f0f0f0;
+    margin: 1rem;
+    padding: 1rem;
+    border-radius: 10px
+}
+
+
+.plot-container {
+  flex-basis: 50%;
+}
+
+g text {
+  fill: black
+}
+
+.plot-container {
+  text-align: center;
+  margin: 1rem;
+}
+
+.attr-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+
+.gm-style-mtc {
+  display: none;
+}
+
+.map-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+}
+
+#map-tooltip {
+  display: none;
+  position: absolute;
+  width: 300px;
+  background-color: whitesmoke;
+  opacity: 0.9;
+  border-radius: 10px;
+  padding: 1rem;
+}
