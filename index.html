@@ -80,9 +80,22 @@
         </div>
         <div class="col shadow p-3 mb-5 bg-white rounded" id="mapSection">
             <div class="boxSection">
-                <h2 id="mapFilter">Location Filter</h2>
-              <!-- <input type="text" >--> 
-             <!--<input id="pac-input" class="controls" type="text" placeholder="Search Box">--> 
+                  <h2 id="mapFilter">Location Filter</h2>
+                  <div class="row">
+                    <div class="col-8">
+                        <div class="input-group mb-1">
+                            <input type="text" id="zipSearchText" class="form-control" placeholder="Search by zipcode" maxlength="10">
+                            <div class="input-group-append">
+                              <button class="btn btn-outline-secondary" type="button" id="zipSearchButton">Search</button>
+                            </div>                    
+                        </div>
+                    </div>
+                    <div class="col" id="warnSection" hidden>
+                        <div class="alert alert-danger" role="alert">
+                            Not found.
+                          </div>
+                    </div>
+                </div>
               <div><div id="map"></div></div>
               <p  id="locationFilterText"> </p>
 

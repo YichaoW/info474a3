@@ -11,6 +11,11 @@ body {
 
 }
 
+#warn {
+  margin:0;
+  vertical-align: middle;
+}
+
 #locationFilterText {
   margin-top: 1rem;
 }

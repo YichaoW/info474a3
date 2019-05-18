@@ -5,8 +5,7 @@ var pmarkers=[];
 var houseInfoWindows=[]; 
 var zipcodes=new Map();
 var infowindow;
-var currentEvent;
-var clickable = true;
+var currentZip;
 
 var origin = {lat: 47.477330, lng: -121.513281};
 
@@ -115,7 +114,18 @@ selects.forEach((select, i) => {
 })
 
 
+$("#zipSearchButton").click(e=>{
+    $("#warnSection").attr("hidden", "");
 
+    var zip = $("#zipSearchText").val();
+    zip = parseInt(zip);
+    var zipExist = zipcodes.get(zip);
+    if (zipExist && zip != currentZip) {
+        shadeRegionByZip(zip);
+    } else if (!zipExist) {
+        $("#warnSection").removeAttr("hidden");
+    }
+})
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
@@ -175,74 +185,9 @@ function centerMap(zoomNum, position) {
 }
 
 function shadeSelectedRegion() {
-    if (currentEvent) {
-        renderRegionByZip(currentEvent.feature.l.ZIP, "green");
-       // map.data.overrideStyle(currentEvent.feature, {fillColor: "green"});
+    if (currentZip) {
+        renderRegionByZip(currentZip, "green");
     }
-}
-
-function initSearchBox() {
-    // Create the search box and link it to the UI element.
-    var input = document.getElementById('pac-input');
-    var searchBox = new google.maps.places.SearchBox(input);
-    map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-
-    // Bias the SearchBox results towards current map's viewport.
-    map.addListener('bounds_changed', function() {
-    searchBox.setBounds(map.getBounds());
-    });
-
-
-    // Listen for the event fired when the user selects a prediction and retrieve
-    // more details for that place.
-    searchBox.addListener('places_changed', function() {
-        var places = searchBox.getPlaces();
-        if (places.length == 0) {
-        return;
-        }
-        // Clear out the old markers.
-        pmarkers.forEach(function(marker) {
-            marker.setMap(null);
-        });
-        pmarkers = [];
-
-        // For each place, get the icon, name and location.
-        var bounds = new google.maps.LatLngBounds();
-        places.forEach(function(place) {
-            if (!place.geometry) {
-                console.log("Returned place contains no geometry");
-                return;
-            }
-            var icon = {
-                url: place.icon,
-                size: new google.maps.Size(71, 71),
-                origin: new google.maps.Point(0, 0),
-                anchor: new google.maps.Point(17, 34),
-                scaledSize: new google.maps.Size(25, 25)
-            };
-
-            // Create a marker for each place.
-            pmarkers.push(new google.maps.Marker({
-                map: map,
-                icon: icon,
-                title: place.name,
-                position: place.geometry.location
-            }));
-
-            if (place.geometry.viewport) {
-            // Only geocodes have viewport.
-                bounds.union(place.geometry.viewport);
-            } else {
-                bounds.extend(place.geometry.location);
-            }
-        });
-        if (places.length <= 1) {
-            centerMap(12, places[0].geometry.location);
-        } else {
-            map.fitBounds(bounds);
-        }
-
-    });
 }
 
 function setLimitBounds() {
@@ -258,6 +203,24 @@ function renderRegionByZip(zip,color) {
     })
 }
 
+function zipClickable(zip) {
+    return getSumForZip(zip)!=0;
+}
+
+function shadeRegionByZip(zip) {
+    if (currentZip != zip) {
+        currentZip = zip;
+        map.data.revertStyle();
+        shadeSelectedRegion();
+        $("#locationFilterText").html("<h3>Location Summary</h3>"+getSummaryText(zip));
+    } else {
+        currentZip = null;
+        $("#locationFilterText").html("");
+        map.data.revertStyle();
+    }
+    filterData();
+}
+
 function initMapDataListeners() {
     
     map.data.addListener('mouseover', async function(event) {
@@ -265,14 +228,13 @@ function initMapDataListeners() {
         infowindow.close();
         infowindow.setContent(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`);
         infowindow.setPosition({lat:event.latLng.lat(),lng:event.latLng.lng()});
-        if (!currentEvent || currentEvent.feature.l.ZIP != event.feature.l.ZIP) {
+        if (currentZip != event.feature.l.ZIP) {
             map.data.revertStyle();
             shadeSelectedRegion();
             if (sum == 0) {
-                clickable = false;
                 map.data.overrideStyle(event.feature, {fillColor: "#636363"});
             } else {
-                infowindow.setContent(getSummaryText(event));
+                infowindow.setContent(getSummaryText(event.feature.l.ZIP));
                 renderRegionByZip(event.feature.l.ZIP, "red");
             }
         }
@@ -282,48 +244,36 @@ function initMapDataListeners() {
     });
 
     map.data.addListener('click', function(event) {
-        if (!clickable) return;
-        if (!currentEvent || currentEvent.feature.l.ZIP != event.feature.l.ZIP) {
-            currentEvent = event;
-            map.data.revertStyle();
-            shadeSelectedRegion();
-            $("#locationFilterText").html("<h3>Location Summary</h3>"+getSummaryText(event));
-        } else {
-            currentEvent = null;
-            $("#locationFilterText").html("");
-            map.data.revertStyle();
-        }
-        filterData();
+        if (!zipClickable(event.feature.l.ZIP) ) return;
+        shadeRegionByZip(event.feature.l.ZIP);
     });
 
     map.data.addListener('mouseout', function(event) {
-        clickable = true;
         infowindow.close();
         map.data.revertStyle();
         shadeSelectedRegion();        
     });
 }
 
-function getSummaryText(event) {
-    if (!event) return;
-    const sum = getSumForZip(event.feature.l.ZIP);
+function getSummaryText(zip) {
+    const sum = getSumForZip(zip);
     
     var extentPrice =  d3.extent(dataset, d=>{
-        if (event.feature.l.ZIP == d.zipcode){
+        if (zip == d.zipcode){
             return +d.price;
         }
     });
     var meanPrice =  d3.mean(dataset, d=>{
-        if (event.feature.l.ZIP == d.zipcode){
+        if (zip == d.zipcode){
             return +d.price;
         }
     });
     var medianPrice =  d3.median(dataset, d=>{
-        if (event.feature.l.ZIP == d.zipcode){
+        if (zip == d.zipcode){
             return +d.price;
         }
     });
-    return `ZIP: ${event.feature.l.ZIP} <br> 
+    return `ZIP: ${zip} <br> 
             # of sold houses: ${sum}<br> 
             Min Price: ${d3.format(",")(extentPrice[0])}<br> 
             Max Price: ${d3.format(",")(extentPrice[1])}<br> 
@@ -418,14 +368,14 @@ function initFilter() {
         .displayFormat(d3.format('.2s'))
         .on('onchange', val => {
             d3.select('div#value-range-price').text(val.map(d => "$" + d3.format(".2s")(d)).join('-'));
-            filters.price = val;
+            filters.price = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
     let priceRange = d3
         .select('div#slider-range-price')
         .append('svg')
-        .attr('width', 300)
+        .attr('width', 500)
         .attr('height', 100)
         .append('g')
         .attr('transform', 'translate(30,30)');
@@ -458,7 +408,7 @@ function initFilter() {
         .step(1)
         .on('onchange', val => {
             d3.select('div#value-range-yearBuilt').text(val.join('-'));
-            filters.year = val;
+            filters.year = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -496,7 +446,7 @@ function initFilter() {
         .marks(1)
         .on('onchange', val => {
             d3.select('div#value-range-bedrooms').text(val.join('-'));
-            filters.bedroom = val;
+            filters.bedroom = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -535,7 +485,7 @@ function initFilter() {
         .marks(0.25)
         .on('onchange', val => {
             d3.select('div#value-range-bathrooms').text(val.map(d3.format('.2f')).join('-'));
-            filters.bathroom = val;
+            filters.bathroom = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -573,7 +523,7 @@ function initFilter() {
         .ticks(4)
         .on('onchange', val => {
             d3.select('div#value-range-floors').text(val.map(d3.format('.1f')).join('-'));
-            filters.floor = val;
+            filters.floor = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -593,20 +543,12 @@ function initFilter() {
             .join('-')
     );
 
-    d3.select("#waterfront-checkbox")
-        .on('change', () => {
-        if (this.checked) {
-            // Checkbox is checked..
-        } else {
-            // Checkbox is not checked..
-        }
-    })
     filterData();
 }
 
 function filterData() {
-    if (currentEvent) {
-        filters.zip = currentEvent.feature.l.ZIP;
+    if (currentZip) {
+        filters.zip = currentZip;
     } else {
         filters.zip = null;
     }
