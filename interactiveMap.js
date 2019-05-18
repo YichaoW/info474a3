@@ -5,10 +5,11 @@ var pmarkers=[];
 var houseInfoWindows=[]; 
 var currentEvent;
 var clickable = true;
-var origin = {lat: 47.655548, lng: -122.303200};
+
+var origin = {lat: 47.277330, lng: -121.513281};
 
 let width = 750;
-let height = 450;
+let height = 750;
 let margin = {top: 20, right: 15, bottom: 100, left: 100};
 let w = width - margin.left - margin.right;
 let h = height - margin.top - margin.bottom;
@@ -97,9 +98,17 @@ selects.forEach((select, i) => {
                 option.selected = "selected"
             }
         }
-        option.innerHTML = axisRefName[key];
+        let innerText = axisRefName[key];
+        if (i === 0) {
+            innerText = "X: " + innerText
+        }  else {
+            innerText = "Y: " + innerText
+        }
+        option.innerHTML = innerText;
         option.value = key;
-        select.appendChild(option);
+        if (i === 1 || (i === 0 && key !== "none")) {
+            select.appendChild(option);
+        }
     })
 })
 
@@ -109,8 +118,11 @@ selects.forEach((select, i) => {
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: origin,
-        zoom: 8,
-        draggable: false
+        zoom: 7,
+        draggable: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        scrollwheel: true
     });
 
     map.data.loadGeoJson('Zipcodes_for_King_County_and_Surrounding_Area__zipcode_area.geojson');
@@ -121,7 +133,7 @@ function initMap() {
     });
 
     setLimitBounds();
-    initSearchBox();
+  //  initSearchBox();
 
     loaddata();
 }
@@ -148,13 +160,13 @@ function initSearchBox() {
     searchBox.setBounds(map.getBounds());
     });
 
-
+        
     // Listen for the event fired when the user selects a prediction and retrieve
     // more details for that place.
     searchBox.addListener('places_changed', function() {
         var places = searchBox.getPlaces();
         if (places.length == 0) {
-        return;
+            return;
         }
         // Clear out the old markers.
         pmarkers.forEach(function(marker) {
@@ -202,7 +214,7 @@ function initSearchBox() {
 }
 
 function setLimitBounds() {
-    var minZoomLevel = 8;
+    var minZoomLevel = 7;
     google.maps.event.addListener(map, 'zoom_changed', function() {
         if (map.getZoom() < minZoomLevel) map.setZoom(minZoomLevel);
     });
@@ -217,7 +229,7 @@ function initMapDataListeners() {
             return total;
         },0);
 
-        $("#locationFilterText").val(`ZIP: ${event.feature.l.ZIP}; # of sold houses: ${sum}`)
+        $("#locationFilterText").html(`ZIP: ${event.feature.l.ZIP}<br> # of sold houses: ${sum}`)
 
         if (!currentEvent || currentEvent.feature.l.OBJECTID != event.feature.l.OBJECTID) {
             map.data.revertStyle();
@@ -226,28 +238,13 @@ function initMapDataListeners() {
                 clickable = false;
                 map.data.overrideStyle(event.feature, {fillColor: "gray"});
             } else {
-                var extentPrice =  d3.extent(dataset, d=>{
-                    if (event.feature.l.ZIP == d.zipcode){
-                        return +d.price;
-                    }
-                });
-                var meanPrice =  d3.mean(dataset, d=>{
-                    if (event.feature.l.ZIP == d.zipcode){
-                        return +d.price;
-                    }
-                });
-                var medianPrice =  d3.median(dataset, d=>{
-                    if (event.feature.l.ZIP == d.zipcode){
-                        return +d.price;
-                    }
-                });
-                $("#locationFilterText").val(`ZIP: ${event.feature.l.ZIP}; # of sold houses: ${sum}; Min Price: ${extentPrice[0]}; Max Price: ${extentPrice[1]}; Mean Price: ${meanPrice}; Median Price: ${medianPrice}`)
-
+                renderSummaryText(event)
                 map.data.overrideStyle(event.feature, {fillColor: "red"});
             }
+        } else {
+            renderSummaryText(event);
         }
-        
-
+        displayMapToolTip(event);
     });
 
     map.data.addListener('click', function(event) {
@@ -258,19 +255,15 @@ function initMapDataListeners() {
             shadeSelectedRegion();
            /* markers.forEach(m=>m.setMap(null));
             markers = [];*/
-            centerMap(11, {lat: event.latLng.lat(), lng: event.latLng.lng()});
+            centerMap(10, {lat: event.latLng.lat(), lng: event.latLng.lng()});
         } else {
-        
             currentEvent = null;
             map.data.revertStyle();
-    
         }
-
-        let currentZip = event.feature.l.ZIP; 
-        if (filters.zip && filters.zip === currentZip) {
-            filters.zip = null;
+        if (currentEvent) {
+            filters.zip = currentEvent.feature.l.ZIP;
         } else {
-            filters.zip = currentZip;
+            filters.zip = null;
         }
         filterData();
     });
@@ -280,7 +273,43 @@ function initMapDataListeners() {
       //  infowindow.close();
         map.data.revertStyle();
         shadeSelectedRegion();
+        renderSummaryText(currentEvent);
+        document.getElementById("map-tooltip").style.display = "none";
     });
+}
+
+function displayMapToolTip(event) {
+    let mapToolTip = document.getElementById("map-tooltip");
+    mapToolTip.style.display = "block";
+    mapToolTip.style.width = "150px";
+    mapToolTip.style.top = event.wa.screenY
+    mapToolTip.style.left = event.wa.screenX + 400
+}
+
+function renderSummaryText(event) {
+    if (!event) return;
+    const sum = dataset.reduce((total, row)=>{
+        if (event.feature.l.ZIP == row.zipcode){
+            return ++total;
+        }
+        return total;
+    },0);
+    var extentPrice =  d3.extent(dataset, d=>{
+        if (event.feature.l.ZIP == d.zipcode){
+            return +d.price;
+        }
+    });
+    var meanPrice =  d3.mean(dataset, d=>{
+        if (event.feature.l.ZIP == d.zipcode){
+            return +d.price;
+        }
+    });
+    var medianPrice =  d3.median(dataset, d=>{
+        if (event.feature.l.ZIP == d.zipcode){
+            return +d.price;
+        }
+    });
+    $("#map-tooltip").html(`ZIP: ${event.feature.l.ZIP} <br> # of sold houses: ${sum}<br> Min Price: ${extentPrice[0]}<br> Max Price: ${extentPrice[1]}<br> Mean Price: ${meanPrice.toFixed(2)}<br> Median Price: ${medianPrice}`)
 }
 
 function loaddata() {
@@ -303,7 +332,8 @@ function loaddata() {
             }
         });
         dataset = data;
-        svg = d3.select("body").append("svg")
+        
+        svg = d3.select("#plot").append("svg")
             .attr("width", w + margin.left + margin.right)
             .attr("height", h + margin.top + margin.bottom)
             .attr("padding", "1rem")
@@ -344,11 +374,14 @@ function initFilter() {
     let priceOptions = d3.map(houseRecords, d => d.price).keys()
         .map(d => parseInt(d))
 
+    price_default= [d3.min(priceOptions), d3.max(priceOptions)];
+    filters.price = price_default;
+
     let priceSliderRange = d3
         .sliderBottom()
         .min(d3.min(priceOptions))
         .max(d3.max(priceOptions))
-        .width(300)
+        .width(200)
         .default(price_default)
         .fill('#2196f3')
         .step(1000)
@@ -357,7 +390,7 @@ function initFilter() {
         .displayFormat(d3.format('.2s'))
         .on('onchange', val => {
             d3.select('div#value-range-price').text(val.map(d => "$" + d3.format(".2s")(d)).join('-'));
-            filters.price = val;
+            filters.price = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -381,18 +414,23 @@ function initFilter() {
     let yearBuiltOptions = d3.map(houseRecords, d => d.yr_built).keys()
         .map(d => parseInt(d))
 
+    
+    
+        yearBuiltDefault = [d3.min(yearBuiltOptions), d3.max(yearBuiltOptions)]
+        filters.year = yearBuiltDefault;
+
     let yearBuiltSliderRange = d3
         .sliderBottom()
         .min(d3.min(yearBuiltOptions))
         .max(d3.max(yearBuiltOptions))
-        .width(300)
+        .width(200)
         .default(yearBuiltDefault)
         .fill('#2196f3')
         .ticks(5)
         .step(1)
         .on('onchange', val => {
             d3.select('div#value-range-yearBuilt').text(val.join('-'));
-            filters.year = val;
+            filters.year = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -416,18 +454,21 @@ function initFilter() {
     let bedroomsOptions = d3.map(houseRecords, d => d.bedrooms).keys()
         .map(d => parseInt(d))
 
+        bedroomDefault = [d3.min(bedroomsOptions), d3.max(bedroomsOptions)]
+        filters.bedroom = bedroomDefault;
+
     let bedroomsSliderRange = d3
         .sliderBottom()
         .min(d3.min(bedroomsOptions))
         .max(d3.max(bedroomsOptions))
-        .width(300)
+        .width(200)
         .default(bedroomDefault)
         .fill('#2196f3')
         .step(1)
         .marks(1)
         .on('onchange', val => {
             d3.select('div#value-range-bedrooms').text(val.join('-'));
-            filters.bedroom = val;
+            filters.bedroom = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -452,18 +493,21 @@ function initFilter() {
     let bathroomsOptions = d3.map(houseRecords, d => d.bathrooms).keys()
         .map(d => parseFloat(d))
 
+        bathroomDefault = [d3.min(bathroomsOptions), d3.max(bathroomsOptions)];
+        filters.bathroom = bathroomDefault;
+
     let bathroomsSliderRange = d3
         .sliderBottom()
         .min(d3.min(bathroomsOptions))
         .max(d3.max(bathroomsOptions))
-        .width(300)
+        .width(200)
         .default(bathroomDefault)
         .fill('#2196f3')
         .step(0.25)
         .marks(0.25)
         .on('onchange', val => {
             d3.select('div#value-range-bathrooms').text(val.map(d3.format('.2f')).join('-'));
-            filters.bathroom = val;
+            filters.bathroom = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -487,18 +531,21 @@ function initFilter() {
     let floorsOptions = d3.map(houseRecords, d => d.floors).keys()
         .map(d => parseFloat(d))
 
+        floorDefault = [d3.min(floorsOptions),d3.max(floorsOptions)]
+        filters.floor = floorDefault;
+
     let floorsSliderRange = d3
         .sliderBottom()
         .min(d3.min(floorsOptions))
         .max(d3.max(floorsOptions))
-        .width(300)
+        .width(200)
         .default(floorDefault)
         .fill('#2196f3')
         .step(0.5)
         .ticks(4)
         .on('onchange', val => {
             d3.select('div#value-range-floors').text(val.map(d3.format('.1f')).join('-'));
-            filters.floor = val;
+            filters.floor = val.sort((a, b) =>  {return a - b});
             filterData();
         });
 
@@ -518,14 +565,28 @@ function initFilter() {
             .join('-')
     );
 
-    d3.select("#waterfront-checkbox")
-        .on('change', () => {
-        if (this.checked) {
-            // Checkbox is checked..
-        } else {
-            // Checkbox is not checked..
-        }
+    filterData();
+}
+
+function filterData() {
+    if (currentEvent) {
+        filters.zip = currentEvent.feature.l.ZIP;
+    } else {
+        filters.zip = null;
+    }
+
+    let filterData = dataset.filter((row) => {
+        let zip = !filters.zip || row.zipcode === filters.zip;
+        let price = filters.price[0] <= row.price && row.price <= filters.price[1];
+        let year = filters.year[0] <= row["yr_built"] && row["yr_built"] <= filters.year[1];
+        let bedroom = filters.bedroom[0] <= row["bedrooms"] && row["bedrooms"] <= filters.bedroom[1];
+        let bathroom = filters.bathroom[0] <= row["bathrooms"] && row["bathrooms"] <= filters.bathroom[1];
+        let floor = filters.floor[0] <= row["floors"] && row["floors"] <= filters.floor[1];
+        return zip && price && year && bedroom && bathroom && floor;
     })
+    clearAxis();
+    drawCoordinates(filterData);
+    drawViz(filterData);
 }
 
 function filterData() {
@@ -538,7 +599,6 @@ function filterData() {
         let floor = filters.floor[0] <= row["floors"] && row["floors"] <= filters.floor[1];
         return zip && price && year && bedroom && bathroom && floor;
     })
-    console.log(filters);
     clearAxis();
     drawCoordinates(filterData);
     drawViz(filterData);
@@ -754,7 +814,7 @@ function drawCoordinates(data) {
             .attr("x", 300)
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(xName);
+            .text("X: " + xName);
 
     svg.append("text")
             .attr("class", "axis-text") 
@@ -763,7 +823,7 @@ function drawCoordinates(data) {
             .attr("x",0 - (height / 2) + 40)
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(yName);
+            .text("Y: " + yName);
 }
 
 function getCountOptimum(data, name) {
