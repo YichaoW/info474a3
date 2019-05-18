@@ -9,8 +9,8 @@ var currentZip;
 
 var origin = {lat: 47.477330, lng: -121.513281};
 
-let width = 750;
-let height = 750;
+let width = 650;
+let height = 650;
 let margin = {top: 20, right: 15, bottom: 100, left: 100};
 let w = width - margin.left - margin.right;
 let h = height - margin.top - margin.bottom;
@@ -19,7 +19,7 @@ let svg;
 let chart;
 let tooltip;
 
-let xAxis = "bedrooms";
+let xAxis = "price";
 let xMax = null;
 let xMin = null;
 let xAxisScale = null;
@@ -47,8 +47,8 @@ let filters = {
 
 let axisRefName = {
     "none": "Count",
-    "bathrooms": "# of Bathrooms",
     "price": "House Price ($)",
+    "bathrooms": "# of Bathrooms",
     "bedrooms": "# of Bedrooms",
     "sqft_living": "Living Space (foot square)",
     "sqft_lot": "Land Space (foot square)",
@@ -786,7 +786,7 @@ function drawCoordinates(data) {
     svg.append("text")
             .attr("class", "axis-text")             
             .attr("y", height - 85)
-            .attr("x", 300)
+            .attr("x", 250)
             .attr("dy", "1em")
             .style("text-anchor", "middle")
             .text(xName);
