@@ -118,6 +118,9 @@ $("#zipSearchButton").click(e=>{
     $("#warnSection").attr("hidden", "");
 
     var zip = $("#zipSearchText").val();
+
+    if (zip=="") return;
+
     zip = parseInt(zip);
     var zipExist = zipcodes.get(zip);
     if (zipExist && zip != currentZip) {
